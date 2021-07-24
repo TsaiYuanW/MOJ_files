@@ -55,11 +55,11 @@ class AssignmentTag(models.Model):
 
 class Assignment(models.Model):
     SCOREBOARD_VISIBLE = 'V'
-    SCOREBOARD_AFTER_CONTEST = 'C'
+    SCOREBOARD_AFTER_ASSIGNMENT = 'C'
     SCOREBOARD_AFTER_PARTICIPATION = 'P'
     SCOREBOARD_VISIBILITY = (
         (SCOREBOARD_VISIBLE, _('Visible')),
-        (SCOREBOARD_AFTER_CONTEST, _('Hidden for duration of assignment')),
+        (SCOREBOARD_AFTER_ASSIGNMENT, _('Hidden for duration of assignment')),
         (SCOREBOARD_AFTER_PARTICIPATION, _('Hidden for duration of participation')),
     )
     key = models.CharField(max_length=20, verbose_name=_('assignment id'), unique=True,
@@ -224,7 +224,7 @@ class Assignment(models.Model):
     def show_scoreboard(self):
         if not self.can_join:
             return False
-        if (self.scoreboard_visibility in (self.SCOREBOARD_AFTER_CONTEST, self.SCOREBOARD_AFTER_PARTICIPATION) and
+        if (self.scoreboard_visibility in (self.SCOREBOARD_AFTER_ASSIGNMENT, self.SCOREBOARD_AFTER_PARTICIPATION) and
                 not self.ended):
             return False
         return True
