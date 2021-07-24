@@ -655,7 +655,8 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
     @cached_property
     def remaining_submission_count(self):
         max_subs = self.contest_problem and self.contest_problem.max_submissions
-        if max_subs is None:
+        assignment_max_subs = self.assignment_problem and self.assignment_problem.max_submissions
+        if max_subs is None && assignment_max_subs is None:
             return None
         # When an IE submission is rejudged into a non-IE status, it will count towards the
         # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
@@ -664,6 +665,9 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
             0,
             max_subs - get_contest_submission_count(
                 self.object, self.request.profile, self.request.profile.current_contest.virtual,
+            ),
+            assignment_max_subs - get_assignment_submission_count(
+                self.object, self.request.profile, self.request.profile.current_assignment.virtual,
             ),
         )
 
@@ -791,6 +795,8 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         context['langs'] = Language.objects.all()
         context['no_judges'] = not context['form'].fields['language'].queryset
         context['submission_limit'] = self.contest_problem and self.contest_problem.max_submissions
+        if context['submission_limit'] is None:
+            context['submission_limit'] = self.assignment_problem and self.assignment_problem.max_submissions
         context['submissions_left'] = self.remaining_submission_count
         context['ACE_URL'] = settings.ACE_URL
         context['default_lang'] = self.default_language
