@@ -1,0 +1,78 @@
+from datetime import timedelta
+
+from django.core.exceptions import ValidationError
+from django.db.models import Max
+from django.template.defaultfilters import floatformat
+from django.urls import reverse
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
+from django.utils.translation import gettext_lazy
+
+from judge.assignment_format.base import BaseAssignmentFormat
+from judge.assignment_format.registry import register_assignment_format
+from judge.utils.timedelta import nice_repr
+
+
+@register_assignment_format('default')
+class DefaultAssignmentFormat(BaseAssignmentFormat):
+    name = gettext_lazy('Default')
+
+    @classmethod
+    def validate(cls, config):
+        if config is not None and (not isinstance(config, dict) or config):
+            raise ValidationError('default assignment expects no config or empty dict as config')
+
+    def __init__(self, assignment, config):
+        super(DefaultAssignmentFormat, self).__init__(assignment, config)
+
+    def update_participation(self, participation):
+        cumtime = 0
+        points = 0
+        format_data = {}
+
+        for result in participation.submissions.values('problem_id').annotate(
+                time=Max('submission__date'), points=Max('points'),
+        ):
+            dt = (result['time'] - participation.start).total_seconds()
+            if result['points']:
+                cumtime += dt
+            format_data[str(result['problem_id'])] = {'time': dt, 'points': result['points']}
+            points += result['points']
+
+        participation.cumtime = max(cumtime, 0)
+        participation.score = round(points, self.assignment.points_precision)
+        participation.tiebreaker = 0
+        participation.format_data = format_data
+        participation.save()
+
+    def display_user_problem(self, participation, assignment_problem):
+        format_data = (participation.format_data or {}).get(str(assignment_problem.id))
+        if format_data:
+            return format_html(
+                u'<td class="{state}"><a href="{url}">{points}<div class="solving-time">{time}</div></a></td>',
+                state=(('pretest-' if self.assignment.run_pretests_only and assignment_problem.is_pretested else '') +
+                       self.best_solution_state(format_data['points'], assignment_problem.points)),
+                url=reverse('assignment_user_submissions',
+                            args=[self.assignment.key, participation.user.user.username, assignment_problem.problem.code]),
+                points=floatformat(format_data['points']),
+                time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),
+            )
+        else:
+            return mark_safe('<td></td>')
+
+    def display_participation_result(self, participation):
+        return format_html(
+            u'<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
+            url=reverse('assignment_all_user_submissions',
+                        args=[self.assignment.key, participation.user.user.username]),
+            points=floatformat(participation.score, -self.assignment.points_precision),
+            cumtime=nice_repr(timedelta(seconds=participation.cumtime), 'noday'),
+        )
+
+    def get_problem_breakdown(self, participation, assignment_problems):
+        return [(participation.format_data or {}).get(str(assignment_problem.id)) for assignment_problem in assignment_problems]
+
+    def get_label_for_problem(self, index):
+        return str(index + 1)
+
+
