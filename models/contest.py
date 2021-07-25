@@ -82,6 +82,8 @@ class Contest(models.Model):
                                      help_text=_('Should be set even for organization-private contests, where it '
                                                  'determines whether the contest is visible to members of the '
                                                  'specified organizations.'))
+    is_assignment = models.BooleanField(verbose_name=_('is assignment'), default=False,
+                                        help_text=_('Should be set when you need contests to be visible in assignment navbar')
     is_rated = models.BooleanField(verbose_name=_('contest rated'), help_text=_('Whether this contest can be rated.'),
                                    default=False)
     view_contest_scoreboard = models.ManyToManyField(Profile, verbose_name=_('view contest scoreboard'), blank=True,
