@@ -61,14 +61,14 @@ def _find_contest(request, key, private_check=True):
 
 class ContestListMixin(object):
     def get_queryset(self):
-        return Contest.get_visible_contests(self.request.user)
+        return Contest.get_assignments(self.request.user)
 
 
 class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestListMixin, ListView):
     model = Contest
     paginate_by = 20
-    template_name = 'contest/list.html'
-    title = gettext_lazy('Contests')
+    template_name = 'assignment/list.html'
+    title = gettext_lazy('Assignments')
     context_object_name = 'past_contests'
     all_sorts = frozenset(('name', 'user_count', 'start_time'))
     default_desc = frozenset(('name', 'user_count'))
@@ -219,7 +219,7 @@ class ContestMixin(object):
 
 
 class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
-    template_name = 'contest/contest.html'
+    template_name = 'assignment/contest.html'
 
     def get_comment_page(self):
         return 'c:%s' % self.object.key
@@ -241,8 +241,8 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
 
 
 class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObjectFormView):
-    title = _('Clone Contest')
-    template_name = 'contest/clone.html'
+    title = _('Clone Assignment')
+    template_name = 'assignment/clone.html'
     form_class = ContestCloneForm
     permission_required = 'judge.clone_contest'
 
@@ -311,12 +311,12 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
         contest = self.object
 
         if not contest.can_join and not (self.is_editor or self.is_tester):
-            return generic_message(request, _('Contest not ongoing'),
+            return generic_message(request, _('Assignment not ongoing'),
                                    _('"%s" is not currently ongoing.') % contest.name)
 
         profile = request.profile
         if profile.current_contest is not None:
-            return generic_message(request, _('Already in contest'),
+            return generic_message(request, _('Already in Assignment'),
                                    _('You are already in a contest: "%s".') % profile.current_contest.contest.name)
 
         if not request.user.is_superuser and contest.banned_users.filter(id=profile.id).exists():
@@ -380,7 +380,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
                 wrong_code = True
         else:
             form = ContestAccessCodeForm()
-        return render(self.request, 'contest/access_code.html', {
+        return render(self.request, 'assignment/access_code.html', {
             'form': form, 'wrong_code': wrong_code,
             'title': _('Enter access code for "%s"') % contest.name,
         })
@@ -405,7 +405,7 @@ ContestDay = namedtuple('ContestDay', 'date weekday is_pad is_today starts ends 
 class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
     firstweekday = SUNDAY
     weekday_classes = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
-    template_name = 'contest/calendar.html'
+    template_name = 'assignment/calendar.html'
 
     def get(self, request, *args, **kwargs):
         try:
@@ -452,7 +452,7 @@ class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
         except ValueError:
             raise Http404()
         else:
-            context['title'] = _('Contests in %(month)s') % {'month': date_filter(month, _("F Y"))}
+            context['title'] = _('Assignments in %(month)s') % {'month': date_filter(month, _("F Y"))}
 
         dates = Contest.objects.aggregate(min=Min('start_time'), max=Max('end_time'))
         min_month = (self.today.year, self.today.month)
@@ -496,7 +496,7 @@ class CachedContestCalendar(ContestCalendar):
 
 
 class ContestStats(TitleMixin, ContestMixin, DetailView):
-    template_name = 'contest/stats.html'
+    template_name = 'assignment/stats.html'
 
     def get_title(self):
         return _('%s Statistics') % self.object.name
@@ -633,7 +633,7 @@ def contest_ranking_ajax(request, contest, participation=None):
         raise Http404()
 
     users, problems = get_contest_ranking_list(request, contest, participation)
-    return render(request, 'contest/ranking-table.html', {
+    return render(request, 'assignment/ranking-table.html', {
         'users': users,
         'problems': problems,
         'contest': contest,
@@ -642,7 +642,7 @@ def contest_ranking_ajax(request, contest, participation=None):
 
 
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
-    template_name = 'contest/ranking.html'
+    template_name = 'assignment/ranking.html'
     tab = None
 
     def get_title(self):
@@ -757,7 +757,7 @@ class ContestMossMixin(ContestMixin, PermissionRequiredMixin):
 
 
 class ContestMossView(ContestMossMixin, TitleMixin, DetailView):
-    template_name = 'contest/moss.html'
+    template_name = 'assignment/moss.html'
 
     def get_title(self):
         return _('%s MOSS Results') % self.object.name
@@ -803,11 +803,11 @@ class ContestTagDetailAjax(DetailView):
     model = ContestTag
     slug_field = slug_url_kwarg = 'name'
     context_object_name = 'tag'
-    template_name = 'contest/tag-ajax.html'
+    template_name = 'assignment/tag-ajax.html'
 
 
 class ContestTagDetail(TitleMixin, ContestTagDetailAjax):
-    template_name = 'contest/tag.html'
+    template_name = 'assignment/tag.html'
 
     def get_title(self):
         return _('Contest tag: %s') % self.object.name
