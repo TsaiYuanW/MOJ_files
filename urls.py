@@ -229,6 +229,13 @@ urlpatterns = [
 
         url(r'^/$', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),  
+    
+   url(r'^assignments/', paged_list_view(assignments.ContestList, 'contest_list')),
+   url(r'^assignments/(?P<year>\d+)/(?P<month>\d+)/$', assignments.ContestCalendar.as_view(), name='contest_calendar'),
+   url(r'^assignments/tag/(?P<name>[a-z-]+)', include([
+       url(r'^$', assignments.ContestTagDetail.as_view(), name='contest_tag'),
+       url(r'^/ajax$', assignments.ContestTagDetailAjax.as_view(), name='contest_tag_ajax'),
+   ])),
   
    url(r'^assignment/(?P<contest>\w+)', include([
         url(r'^$', assignments.ContestDetail.as_view(), name='contest_view'),
