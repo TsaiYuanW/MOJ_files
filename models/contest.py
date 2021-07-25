@@ -387,6 +387,29 @@ class Contest(models.Model):
             queryset = queryset.filter(q)
         return queryset.distinct()
 
+    @classmethod
+    def get_assignments(cls, user):
+        if not user.is_authenticated:
+            return cls.objects.filter(is_visible=True, is_assignment=False, is_organization_private=False, is_private=False) \
+                              .defer('description').distinct()
+        queryset = cls.objects.filter(is_assignment=True).defer('description')
+        if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
+            q = Q(is_visible=True)
+            q &= (
+                Q(view_contest_scoreboard=user.profile) |
+                Q(is_organization_private=False, is_private=False) |
+                Q(is_organization_private=False, is_private=True, private_contestants=user.profile) |
+                Q(is_organization_private=True, is_private=False, organizations__in=user.profile.organizations.all()) |
+                Q(is_organization_private=True, is_private=True, organizations__in=user.profile.organizations.all(),
+                  private_contestants=user.profile)
+            )
+
+            q |= Q(authors=user.profile)
+            q |= Q(curators=user.profile)
+            q |= Q(testers=user.profile)
+            queryset = queryset.filter(q)
+        return queryset.distinct()
+                                        
     def rate(self):
         with transaction.atomic():
             Rating.objects.filter(contest__end_time__range=(self.end_time, self._now)).delete()
