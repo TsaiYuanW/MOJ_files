@@ -16,7 +16,7 @@ from judge.sitemap import BlogPostSitemap, ContestSitemap, HomePageSitemap, Orga
     SolutionSitemap, UrlSitemap, UserSitemap
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tasks, ticket, \
-    two_factor, user, widgets
+    two_factor, user, widgets, assignments
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
@@ -230,33 +230,33 @@ urlpatterns = [
         url(r'^/$', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),  
   
-   url(r'^assignment/(?P<assignment>\w+)', include([
-        url(r'^$', assignments.AssignmentDetail.as_view(), name='assignment_view'),
-        url(r'^/moss$', assignments.AssignmentMossView.as_view(), name='assignment_moss'),
-        url(r'^/moss/delete$', assignments.AssignmentMossDelete.as_view(), name='assignment_moss_delete'),
-        url(r'^/clone$', assignments.AssignmentClone.as_view(), name='assignment_clone'),
-        url(r'^/ranking/$', assignments.AssignmentRanking.as_view(), name='assignment_ranking'),
-        url(r'^/ranking/ajax$', assignments.assignment_ranking_ajax, name='assignment_ranking_ajax'),
-        url(r'^/join$', assignments.AssignmentJoin.as_view(), name='assignment_join'),
-        url(r'^/leave$', assignments.AssignmentLeave.as_view(), name='assignment_leave'),
-        url(r'^/stats$', assignments.AssignmentStats.as_view(), name='assignment_stats'),
+   url(r'^assignment/(?P<contest>\w+)', include([
+        url(r'^$', assignments.ContestDetail.as_view(), name='contest_view'),
+        url(r'^/moss$', assignments.ContestMossView.as_view(), name='contest_moss'),
+        url(r'^/moss/delete$', assignments.ContestMossDelete.as_view(), name='contest_moss_delete'),
+        url(r'^/clone$', assignments.ContestClone.as_view(), name='contest_clone'),
+        url(r'^/ranking/$', assignments.ContestRanking.as_view(), name='contest_ranking'),
+        url(r'^/ranking/ajax$', assignments.contest_ranking_ajax, name='contest_ranking_ajax'),
+        url(r'^/join$', assignments.ContestJoin.as_view(), name='contest_join'),
+        url(r'^/leave$', assignments.ContestLeave.as_view(), name='contest_leave'),
+        url(r'^/stats$', assignments.ContestStats.as_view(), name='contest_stats'),
 
         url(r'^/rank/(?P<problem>\w+)/',
-            paged_list_view(ranked_submission.AssignmentRankedSubmission, 'assignment_ranked_submissions')),
+            paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
 
         url(r'^/submissions/(?P<user>[\w-]+)/',
-            paged_list_view(submission.UserAllAssignmentSubmissions, 'assignment_all_user_submissions')),
+            paged_list_view(submission.UserAllContestSubmissions, 'contest_all_user_submissions')),
         url(r'^/submissions/(?P<user>[\w-]+)/(?P<problem>\w+)/',
-            paged_list_view(submission.UserAssignmentSubmissions, 'assignment_user_submissions')),
+            paged_list_view(submission.UserContestSubmissions, 'contest_user_submissions')),
 
-        url(r'^/participations$', assignments.AssignmentParticipationList.as_view(), name='assignment_participation_own'),
+        url(r'^/participations$', assignments.ContestParticipationList.as_view(), name='contest_participation_own'),
         url(r'^/participations/(?P<user>[\w-]+)$',
-            assignments.AssignmentParticipationList.as_view(), name='assignment_participation'),
-        url(r'^/participation/disqualify$', assignments.AssignmentParticipationDisqualify.as_view(),
-            name='assignment_participation_disqualify'),
+            assignments.ContestParticipationList.as_view(), name='contest_participation'),
+        url(r'^/participation/disqualify$', assignments.ContestParticipationDisqualify.as_view(),
+            name='contest_participation_disqualify'),
 
-        url(r'^/$', lambda _, assignment: HttpResponsePermanentRedirect(reverse('assignment_view', args=[assignment]))),
-    ])),
+        url(r'^/$', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
+    ])),  
 
 
 
