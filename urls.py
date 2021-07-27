@@ -236,36 +236,13 @@ urlpatterns = [
        url(r'^$', assignments.ContestTagDetail.as_view(), name='contest_tag'),
        url(r'^/ajax$', assignments.ContestTagDetailAjax.as_view(), name='contest_tag_ajax'),
    ])),
-  
-   url(r'^assignment/(?P<contest>\w+)', include([
-        url(r'^$', assignments.ContestDetail.as_view(), name='contest_view'),
-        url(r'^/moss$', assignments.ContestMossView.as_view(), name='contest_moss'),
-        url(r'^/moss/delete$', assignments.ContestMossDelete.as_view(), name='contest_moss_delete'),
-        url(r'^/clone$', assignments.ContestClone.as_view(), name='contest_clone'),
-        url(r'^/ranking/$', assignments.ContestRanking.as_view(), name='contest_ranking'),
-        url(r'^/ranking/ajax$', assignments.contest_ranking_ajax, name='contest_ranking_ajax'),
-        url(r'^/join$', assignments.ContestJoin.as_view(), name='contest_join'),
-        url(r'^/leave$', assignments.ContestLeave.as_view(), name='contest_leave'),
-        url(r'^/stats$', assignments.ContestStats.as_view(), name='contest_stats'),
 
-        url(r'^/rank/(?P<problem>\w+)/',
-            paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
-
-        url(r'^/submissions/(?P<user>[\w-]+)/',
-            paged_list_view(submission.UserAllContestSubmissions, 'contest_all_user_submissions')),
-        url(r'^/submissions/(?P<user>[\w-]+)/(?P<problem>\w+)/',
-            paged_list_view(submission.UserContestSubmissions, 'contest_user_submissions')),
-
-        url(r'^/participations$', assignments.ContestParticipationList.as_view(), name='contest_participation_own'),
-        url(r'^/participations/(?P<user>[\w-]+)$',
-            assignments.ContestParticipationList.as_view(), name='contest_participation'),
-        url(r'^/participation/disqualify$', assignments.ContestParticipationDisqualify.as_view(),
-            name='contest_participation_disqualify'),
-
-        url(r'^/$', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
-    ])),  
-
-
+   url(r'^quizs/', paged_list_view(quizs.ContestList, 'contest_list')),
+   url(r'^quizs/(?P<year>\d+)/(?P<month>\d+)/$', quizs.ContestCalendar.as_view(), name='contest_calendar'),
+   url(r'^quizs/tag/(?P<name>[a-z-]+)', include([
+       url(r'^$', quizs.ContestTagDetail.as_view(), name='contest_tag'),
+       url(r'^/ajax$', quizs.ContestTagDetailAjax.as_view(), name='contest_tag_ajax'),
+   ])),
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
     url(r'^organization/(?P<pk>\d+)-(?P<slug>[\w-]*)', include([
