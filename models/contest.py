@@ -83,7 +83,9 @@ class Contest(models.Model):
                                                  'determines whether the contest is visible to members of the '
                                                  'specified organizations.'))
     is_assignment = models.BooleanField(verbose_name=_('is assignment'), default=False,
-                                        help_text=_('Should be set when you need contests to be visible in assignment navbar'))
+                                        help_text=_('Should be set when you need contests to be visible in assignment list'))
+    is_quiz = models.BooleanField(verbose_name=_('is quiz'), default=False,
+                                        help_text=_('Should be set when you need contests to be visible in quiz list'))
     is_rated = models.BooleanField(verbose_name=_('contest rated'), help_text=_('Whether this contest can be rated.'),
                                    default=False)
     view_contest_scoreboard = models.ManyToManyField(Profile, verbose_name=_('view contest scoreboard'), blank=True,
@@ -393,6 +395,29 @@ class Contest(models.Model):
             return cls.objects.filter(is_visible=True, is_assignment=False, is_organization_private=False, is_private=False) \
                               .defer('description').distinct()
         queryset = cls.objects.filter(is_assignment=True).defer('description')
+        if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
+            q = Q(is_visible=True)
+            q &= (
+                Q(view_contest_scoreboard=user.profile) |
+                Q(is_organization_private=False, is_private=False) |
+                Q(is_organization_private=False, is_private=True, private_contestants=user.profile) |
+                Q(is_organization_private=True, is_private=False, organizations__in=user.profile.organizations.all()) |
+                Q(is_organization_private=True, is_private=True, organizations__in=user.profile.organizations.all(),
+                  private_contestants=user.profile)
+            )
+
+            q |= Q(authors=user.profile)
+            q |= Q(curators=user.profile)
+            q |= Q(testers=user.profile)
+            queryset = queryset.filter(q)
+        return queryset.distinct()
+    
+    @classmethod
+    def get_quizs(cls, user):
+        if not user.is_authenticated:
+            return cls.objects.filter(is_visible=True, is_quiz=False, is_organization_private=False, is_private=False) \
+                              .defer('description').distinct()
+        queryset = cls.objects.filter(is_quiz=True).defer('description')
         if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
             q = Q(is_visible=True)
             q &= (
