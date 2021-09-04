@@ -82,7 +82,7 @@ class Contest(models.Model):
                                      help_text=_('Should be set even for organization-private contests, where it '
                                                  'determines whether the contest is visible to members of the '
                                                  'specified organizations.'))
-    is_homework = models.BooleanField(verbose_name=_('is assignment'), default=False,
+    is_homework = models.BooleanField(verbose_name=_('is homework'), default=False,
                                         help_text=_('Should be set when you need contests to be visible in homework list'))
     is_exercise = models.BooleanField(verbose_name=_('is exercise'), default=False,
                                         help_text=_('Should be set when you need contests to be visible in exercise list'))
