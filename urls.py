@@ -16,7 +16,7 @@ from judge.sitemap import BlogPostSitemap, ContestSitemap, HomePageSitemap, Orga
     SolutionSitemap, UrlSitemap, UserSitemap
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tasks, ticket, \
-    two_factor, user, widgets, assignments, quizs
+    two_factor, user, widgets, homeworks, exercises, quizs
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
@@ -230,19 +230,9 @@ urlpatterns = [
         url(r'^/$', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),  
     
-   url(r'^assignments/', paged_list_view(assignments.ContestList, 'contest_list')),
-   url(r'^assignments/(?P<year>\d+)/(?P<month>\d+)/$', assignments.ContestCalendar.as_view(), name='contest_calendar'),
-   url(r'^assignments/tag/(?P<name>[a-z-]+)', include([
-       url(r'^$', assignments.ContestTagDetail.as_view(), name='contest_tag'),
-       url(r'^/ajax$', assignments.ContestTagDetailAjax.as_view(), name='contest_tag_ajax'),
-   ])),
-
+   url(r'^homeworks/', paged_list_view(homeworks.ContestList, 'contest_list')),
+   url(r'^exercises/', pages_list_view(exercises.ContestList, 'contest_list')),
    url(r'^quizs/', paged_list_view(quizs.ContestList, 'contest_list')),
-   url(r'^quizs/(?P<year>\d+)/(?P<month>\d+)/$', quizs.ContestCalendar.as_view(), name='contest_calendar'),
-   url(r'^quizs/tag/(?P<name>[a-z-]+)', include([
-       url(r'^$', quizs.ContestTagDetail.as_view(), name='contest_tag'),
-       url(r'^/ajax$', quizs.ContestTagDetailAjax.as_view(), name='contest_tag_ajax'),
-   ])),
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
     url(r'^organization/(?P<pk>\d+)-(?P<slug>[\w-]*)', include([
