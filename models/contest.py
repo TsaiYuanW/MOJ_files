@@ -82,8 +82,10 @@ class Contest(models.Model):
                                      help_text=_('Should be set even for organization-private contests, where it '
                                                  'determines whether the contest is visible to members of the '
                                                  'specified organizations.'))
-    is_assignment = models.BooleanField(verbose_name=_('is assignment'), default=False,
-                                        help_text=_('Should be set when you need contests to be visible in assignment list'))
+    is_homework = models.BooleanField(verbose_name=_('is assignment'), default=False,
+                                        help_text=_('Should be set when you need contests to be visible in homework list'))
+    is_exercise = models.BooleanField(verbose_name=_('is exercise'), default=False,
+                                        help_text=_('Should be set when you need contests to be visible in exercise list'))
     is_quiz = models.BooleanField(verbose_name=_('is quiz'), default=False,
                                         help_text=_('Should be set when you need contests to be visible in quiz list'))
     is_rated = models.BooleanField(verbose_name=_('contest rated'), help_text=_('Whether this contest can be rated.'),
@@ -390,11 +392,34 @@ class Contest(models.Model):
         return queryset.distinct()
 
     @classmethod
-    def get_assignments(cls, user):
+    def get_homeworks(cls, user):
         if not user.is_authenticated:
-            return cls.objects.filter(is_visible=True, is_assignment=False, is_organization_private=False, is_private=False) \
+            return cls.objects.filter(is_visible=True, is_homework=False, is_organization_private=False, is_private=False) \
                               .defer('description').distinct()
-        queryset = cls.objects.filter(is_assignment=True).defer('description')
+        queryset = cls.objects.filter(is_homework=True).defer('description')
+        if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
+            q = Q(is_visible=True)
+            q &= (
+                Q(view_contest_scoreboard=user.profile) |
+                Q(is_organization_private=False, is_private=False) |
+                Q(is_organization_private=False, is_private=True, private_contestants=user.profile) |
+                Q(is_organization_private=True, is_private=False, organizations__in=user.profile.organizations.all()) |
+                Q(is_organization_private=True, is_private=True, organizations__in=user.profile.organizations.all(),
+                  private_contestants=user.profile)
+            )
+
+            q |= Q(authors=user.profile)
+            q |= Q(curators=user.profile)
+            q |= Q(testers=user.profile)
+            queryset = queryset.filter(q)
+        return queryset.distinct()
+    
+    @classmethod
+    def get_exercises(cls, user):
+        if not user.is_authenticated:
+            return cls.objects.filter(is_visible=True, is_exercise=False, is_organization_private=False, is_private=False) \
+                              .defer('description').distinct()
+        queryset = cls.objects.filter(is_exercise=True).defer('description')
         if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
             q = Q(is_visible=True)
             q &= (
